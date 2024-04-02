@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+    <title>AdjustedCostBase.ca Export</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+      }
+    </style>
+    <script
+      type="text/javascript"
+      src="https://wealthica.github.io/wealthica.js/dist/addon.min.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"
+    ></script>
+  </head>
+  <body>
+    <h3>AdjustedCostBase.ca Exporter</h3>
+    <p>
+      Select filters and click the button below. Transactions will be exported
+      in a format that can be imported by AdjustedCostBase.ca
+    </p>
+    <p>
+      Please note that only Buy and Sell transactions are currently supported
+    </p>
+    <p>
+      <button type="button" disabled="disabled" id="export">
+        Export Transactions
+      </button>
+    </p>
+
+    <script type="text/javascript">
+      var addon, addonOptions;
+      const HEADERS = [
+        "Date",
+        "Transaction Type",
+        "Security",
+        "Shares",
+        "Amount",
+        "Commission",
+        "Exchange Rate",
+        "Price in Foreign Currency?",
+        "Commission in Foreign Currency?",
+      ];
+
+      $(function () {
+        addon = new Addon();
+
+        addon
+          .on("init", function (options) {
+            addonOptions = options;
+            $("button").removeAttr("disabled");
+          })
+          .on("update", function (options) {
+            addonOptions = options;
+          });
+
+        $("#export").on("click", function () {
+          $(this).attr("disabled", "disabled");
+
+          addon.api
+            .getTransactions(getQueryFromOptions(addonOptions))
+            .then(function (response) {
+              let csvContent = "data:text/csv;charset=utf-8,\n";
+              csvContent += HEADERS.join(",");
+              csvContent += "\n";
+              response.forEach(function (row) {
+                currency = row["security"]["currency"].toUpperCase();
+                fields = [
+                  row["settlement_date"],
+                  row["type"],
+                  row["symbol"],
+                  row["quantity"],
+                  row["currency_amount"] + row["fee"],
+                  row["fee"],
+                  currency,
+                  currency == "CAD" ? "No" : "Yes",
+                  currency == "CAD" ? "No" : "Yes",
+                ];
+                csvContent += row.join(",");
+                csvContent += "\n";
+              });
+              let encodedUri = encodeURI(csvContent);
+              let link = document.createElement("a");
+              link.setAttribute("href", encodedUri);
+              link.setAttribute("download", "acb_transactions.csv");
+              document.body.appendChild(link);
+              link.click();
+            })
+            .catch(function (err) {
+              console.log("Error:<br><code>" + err + "</code>");
+            })
+            .finally(function () {
+              $("#export").removeAttr("disabled");
+            });
+        });
+
+        function getQueryFromOptions(options) {
+          return {
+            from: options.dateRangeFilter && options.dateRangeFilter[0],
+            to: options.dateRangeFilter && options.dateRangeFilter[1],
+            groups: options.groupsFilter,
+            institutions: options.institutionsFilter,
+            investments:
+              options.investmentsFilter === "all"
+                ? null
+                : options.investmentsFilter,
+            types: "buy,sell",
+          };
+        }
+      });
+    </script>
+  </body>
+</html>
