@@ -71,8 +71,14 @@
               csvContent += "\n";
               response.forEach(function (row) {
                 currency = row["security"]["currency"].toUpperCase();
+                settle_date = new Date(row["settlement_date"]);
+                date_string = [
+                  settle_date.getFullYear(),
+                  settle_date.getMonth() + 1,
+                  settle_date.getDate()
+                ].join("/");
                 fields = [
-                  row["settlement_date"],
+                  date_string,
                   row["type"],
                   row["symbol"],
                   row["quantity"],
