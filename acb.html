@@ -82,7 +82,7 @@
                   currency == "CAD" ? "No" : "Yes",
                   currency == "CAD" ? "No" : "Yes",
                 ];
-                csvContent += row.join(",");
+                csvContent += fields.join(",");
                 csvContent += "\n";
               });
               let encodedUri = encodeURI(csvContent);
