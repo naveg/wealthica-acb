@@ -91,9 +91,11 @@
                 csvContent += fields.join(",");
                 csvContent += "\n";
               });
-              let encodedUri = encodeURI(csvContent);
-              let link = document.createElement("a");
-              link.setAttribute("href", encodedUri);
+
+              const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+              const url = URL.createObjectURL(blob);
+              const link = document.createElement("a");
+              link.setAttribute("href", url);
               link.setAttribute("download", "acb_transactions.csv");
               document.body.appendChild(link);
               link.click();
